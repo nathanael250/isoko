@@ -98,7 +98,22 @@
                             <span>Showing 1 to 1 of 1 entries</span>
                         </div>
                     </div>
+                    <script>
+                    function toggleMenu(menuId) {
+                        const menu = document.getElementById(menuId);
+                        const arrow = document.querySelector(`#${menuId} ~ button i`);
 
+                        if (menu.classList.contains('hidden')) {
+                            menu.classList.remove('hidden');
+                            menu.classList.add('block');
+                            arrow.classList.add('rotate-90');
+                        } else {
+                            menu.classList.add('hidden');
+                            menu.classList.remove('block');
+                            arrow.classList.remove('rotate-90');
+                        }
+                    }
+                </script>
                 </div>
             </main>
         </div>

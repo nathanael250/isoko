@@ -10,8 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Define toggleMenu globally
-    window.toggleMenu = function (menuId) {
+    function toggleMenu(menuId) {
         const menu = document.getElementById(menuId);
 
         if (activeMenu === menuId) {
@@ -34,5 +33,5 @@ document.addEventListener('DOMContentLoaded', () => {
             menu.classList.add('block');
             activeMenu = menuId; // Set the new active menu
         }
-    };
+    }
 });

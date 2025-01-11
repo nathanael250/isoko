@@ -13,7 +13,7 @@
 </head>
 
 <body>
-<div class="flex h-screen overflow-hidden">
+    <div class="flex h-screen overflow-hidden">
         <?php include('../includes/sidebar.php') ?>
         <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
             <?php include('../includes/Navbar.php') ?>
@@ -51,7 +51,133 @@
                     </div>
                     <section class="content">
                         <div class="mt-6 bg-white border-t-4 border-blue-700 rounded p-4 shadow-lg py-4">
-                            <form action="borrowerIn.php" class="form-horizontal" method="post" id="add_borrower_form" enctype="multipart/form-data">
+
+                            <?php
+                            ob_start();
+                            // Database configuration
+                            $servername = "localhost";
+                            $username = "root";
+                            $password = "";
+                            $dbname = "lms1";
+
+                            // Create connection
+                            $conn = new mysqli($servername, $username, $password, $dbname);
+
+                            // Check connection
+                            if ($conn->connect_error) {
+                                die("Connection failed: " . $conn->connect_error);
+                            }
+
+                            $id = $_GET['borrower_id'];
+                            $sel = mysqli_query($conn, "SELECT * FROM  tbl_borrowers WHERE borrower_id = $id");
+
+                            $data = mysqli_fetch_array($sel);
+                            // Check if the form is submitted
+                            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_borrower'])) {
+                                // Retrieve form data
+                                $borrower_firstname = $_POST['borrower_firstname'];
+                                $borrower_lastname = $_POST['borrower_lastname'];
+                                $borrower_gender = $_POST['borrower_gender'];
+                                $borrower_country = $_POST['borrower_country'];
+                                $borrower_title = $_POST['borrower_title'];
+                                $borrower_mobile = $_POST['borrower_mobile'];
+                                $borrower_email = $_POST['borrower_email'];
+                                $borrower_unique_number = $_POST['borrower_unique_number'];
+                                $borrower_dob = $_POST['borrower_dob'];
+                                $borrower_address = $_POST['borrower_address'];
+                                $borrower_city = $_POST['borrower_city'];
+                                $borrower_province = $_POST['borrower_province'];
+                                $borrower_zipcode = $_POST['borrower_zipcode'];
+                                $borrower_landline = $_POST['borrower_landline'];
+                                $borrower_business_name = $_POST['borrower_business_name'];
+                                $borrower_working_status = $_POST['borrower_working_status'];
+                                $borrower_description = $_POST['borrower_description'];
+
+                                // Define upload directory
+                                $uploads_dir = 'uploads'; // Adjust the path as needed
+
+
+                                // Handle single file upload (user picture)
+                                $user_picture = null;
+                                if (isset($_FILES['user_picture']) && $_FILES['user_picture']['error'] === UPLOAD_ERR_OK) {
+                                    $original_name = basename($_FILES['user_picture']['name']);
+                                    $unique_name = uniqid() . '_' . $original_name;
+                                    $user_picture = $uploads_dir . $unique_name;
+
+                                    if (!move_uploaded_file($_FILES['user_picture']['tmp_name'], $user_picture)) {
+                                        echo "Error: Unable to upload user picture.";
+                                        $user_picture = null;
+                                    }
+                                }
+
+                                // Handle multiple file uploads
+                                $borrower_files = [];
+                                if (isset($_FILES['borrower_files']['name'])) {
+                                    foreach ($_FILES['borrower_files']['name'] as $key => $file_name) {
+                                        if ($_FILES['borrower_files']['error'][$key] === UPLOAD_ERR_OK) {
+                                            $original_name = basename($file_name);
+                                            $unique_name = uniqid() . '_' . $original_name;
+                                            $destination = $uploads_dir . $unique_name;
+
+                                            if (move_uploaded_file($_FILES['borrower_files']['tmp_name'][$key], $destination)) {
+                                                $borrower_files[] = $destination;
+                                            } else {
+                                                echo "Error: Unable to upload file ($file_name).";
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Prepare and bind
+                                $stmt = $conn->prepare("UPDATE tbl_borrowers SET
+        First_Name=?, Last_Name=?, Gender=?, Country=?,
+        Title=?, Mobile=?, Email=?, Date_of_Birth=?,
+        Address=?, City=?, Province=?,
+        Zip_Code=?, Landline_Phone=?, Business_Name=?,
+        Working_Status=?, Borrower_Photo=?, Description=?, Borrower_Files=? WHERE borrower_id=$id");
+
+                                $borrower_files_json = json_encode($borrower_files);
+
+                                $stmt->bind_param(
+                                    "ssssssssssssssssss",
+                                    $borrower_firstname,
+                                    $borrower_lastname,
+                                    $borrower_gender,
+                                    $borrower_country,
+                                    $borrower_title,
+                                    $borrower_mobile,
+                                    $borrower_email,
+                                    #$borrower_unique_number,
+                                    $borrower_dob,
+                                    $borrower_address,
+                                    $borrower_city,
+                                    $borrower_province,
+                                    $borrower_zipcode,
+                                    $borrower_landline,
+                                    $borrower_business_name,
+                                    $borrower_working_status,
+                                    $borrower_description,
+                                    $user_picture,
+                                    $borrower_files_json
+                                );
+
+                                // Execute the query
+                                if ($stmt->execute()) {
+                                    echo "Borrower record Updated successfully.";
+                                    header("Location:ViewAllBrowers.php");
+                                } else {
+                                    echo "Error: " . $stmt->error;
+                                }
+
+                                // Close statement and connection
+                                $stmt->close();
+                            }
+
+                            $conn->close();
+                            ob_end_flush();
+                            ?>
+
+                            <form class="form-horizontal" method="post" id="add_borrower_form" enctype="multipart/form-data">
                                 <input type="hidden" name="back_url" value="">
                                 <input type="hidden" name="add_borrower" value="1">
                                 <div class="flex flex-col gap-4">
@@ -65,6 +191,7 @@
                                                 id="inputBorrowerFirstName"
                                                 placeholder="First Name"
                                                 required
+                                                value="<?php echo $data['First_Name'] ?>"
                                                 class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
                                         </div>
                                     </div>
@@ -79,14 +206,16 @@
                                                 id="inputBorrowerLastName"
                                                 placeholder="Middle and Last Name"
                                                 required
+                                                value="<?php echo $data['Last_Name'] ?>"
                                                 class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-4 mb-4 px-4">
                                         <label for="inputBorrowerGender" class="w-1/4 text-gray-700 font-medium">Gender</label>
                                         <div class="w-3/4">
-                                            <select class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" name="borrower_gender" required>
-                                                <option value="Male" />Male</option>
+                                            <select class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" name="borrower_gender" value="<?php echo $data['Gender'] ?>" required>
+                                                <option value="<?php echo $data['Gender'] ?>"><?php echo $data['Gender'] ?></option>
+                                                <option value="Males" />Male</option>
                                                 <option value="Female" />Female</option>
                                             </select>
                                         </div>
@@ -95,8 +224,8 @@
 
                                         <label for="inputCountry" class="w-1/4 text-gray-700 font-medium">Country</label>
                                         <div class="col-sm-4">
-                                            <select class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" name="borrower_country" id="inputCountry" required>
-                                                <option value="" selected></option>
+                                            <select name="borrower_country" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputCountry" required>
+                                                <option value="<?php echo $data['Country'] ?>"><?php echo $data['Country'] ?></option>
                                                 <option value="AF">Afghanistan</option>
                                                 <option value="AX">Aland Islands</option>
                                                 <option value="AL">Albania</option>
@@ -327,7 +456,7 @@
                                                 <option value="TM">Turkmenistan</option>
                                                 <option value="TC">Turks and Caicos Islands</option>
                                                 <option value="TV">Tuvalu</option>
-                                                <option value="UG" selected>Uganda</option>
+                                                <option value="UG">Uganda</option>
                                                 <option value="UA">Ukraine</option>
                                                 <option value="AE">United Arab Emirates</option>
                                                 <option value="GB">United Kingdom</option>
@@ -353,7 +482,7 @@
                                         <label for="inputBorrowerTitle" class="w-1/4 text-gray-700 font-medium">Title</label>
                                         <div class="w-3/4">
                                             <select class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" name="borrower_title" id="inputBorrowerTitle">
-                                                <option value="0"></option>
+                                                <option value="<?php echo $data['Title'] ?>"><?php echo $data['Title'] ?></option>
                                                 <option value="Mr.">Mr. </option>
                                                 <option value="Mrs.">Mrs. </option>
                                                 <option value="Miss">Miss </option>
@@ -367,21 +496,21 @@
                                     <div class="flex items-center space-x-4 mb-4 px-4">
                                         <label for="inputBorrowerMobile" class="w-1/4 text-gray-700 font-medium">Mobile</label>
                                         <div class="col-sm-10">
-                                            <input type="text" name="borrower_mobile" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerMobile" placeholder="Numbers Only" value="" onkeypress="return isNumberKey(event)">
+                                            <input type="text" name="borrower_mobile" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerMobile" placeholder="Numbers Only" value="<?php echo $data['Mobile'] ?>" onkeypress="return isNumberKey(event)">
                                             <p class="text-slate-500 text-xs"><b><u>Do not</u> put country code, spaces, or characters</b> in mobile otherwise you won't be able to send SMS to this mobile.</b></p>
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-4 mb-4 px-4">
                                         <label for="inputBorrowerEmail" class="w-1/4 text-gray-700 font-medium">Email</label>
                                         <div class="col-sm-10">
-                                            <input type="text" name="borrower_email" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerEmail" placeholder="Email" value="">
+                                            <input type="text" name="borrower_email" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerEmail" placeholder="Email" value="<?php echo $data['Email'] ?>">
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-4 mb-4 px-4">
 
                                         <label for="inputBorrowerUniqueNumber" class="w-1/4 text-gray-700 font-medium">Unique Number</label>
                                         <div class="col-sm-10">
-                                            <input type="text" name="borrower_unique_number" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerUniqueNumber" placeholder="Unique Number" value="">
+                                            <input type="text" name="borrower_unique_number" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerUniqueNumber" placeholder="Unique Number" value="<?php echo $data['borrower_id'] ?>">
                                             <p class="text-slate-500 text-xs">You can enter unique number to identify the borrower such as Social Security Number, License #, Registration Id....</p>
                                         </div>
                                     </div>
@@ -400,48 +529,48 @@
                                     <div class="flex items-center space-x-4 mb-4 px-4">
                                         <label for="inputBorrowerDob" class="w-1/4 text-gray-700 font-medium">Date of Birth</label>
                                         <div class="col-sm-10">
-                                            <input type="date" name="borrower_dob" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerDob" placeholder="dd/mm/yyyy" value="">
+                                            <input type="date" name="borrower_dob" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerDob" placeholder="dd/mm/yyyy" value="<?php echo $data['Date_of_Birth'] ?>">
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-4 mb-4 px-4">
 
                                         <label for="inputBorrowerAddress" class="w-1/4 text-gray-700 font-medium">Address</label>
                                         <div class="col-sm-10">
-                                            <input type="text" name="borrower_address" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerAddress" placeholder="Address" value="">
+                                            <input type="text" name="borrower_address" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerAddress" placeholder="Address" value="<?php echo $data['Address'] ?>">
                                         </div>
                                     </div>
 
                                     <div class="flex items-center space-x-4 mb-4 px-4">
                                         <label for="inputBorrowerCity" class="w-1/4 text-gray-700 font-medium">City</label>
                                         <div class="col-sm-10">
-                                            <input type="text" name="borrower_city" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerCity" placeholder="City" value="">
+                                            <input type="text" name="borrower_city" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerCity" placeholder="City" value="<?php echo $data['City'] ?>">
                                         </div>
                                     </div>
 
                                     <div class="flex items-center space-x-4 mb-4 px-4">
                                         <label for="inputBorrowerProvince" class="w-1/4 text-gray-700 font-medium">Province / State</label>
                                         <div class="col-sm-10">
-                                            <input type="text" name="borrower_province" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerProvince" placeholder="Province or State" value="">
+                                            <input type="text" name="borrower_province" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerProvince" placeholder="Province or State" value="<?php echo $data['Province'] ?>">
                                         </div>
                                     </div>
 
                                     <div class="flex items-center space-x-4 mb-4 px-4">
                                         <label for="inputBorrowerZipcode" class="w-1/4 text-gray-700 font-medium">Zipcode</label>
                                         <div class="col-sm-10">
-                                            <input type="text" name="borrower_zipcode" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerZipcode" placeholder="Zipcode" value="">
+                                            <input type="text" name="borrower_zipcode" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerZipcode" placeholder="Zipcode" value="<?php echo $data['Zip_Code'] ?>">
                                         </div>
                                     </div>
 
                                     <div class="flex items-center space-x-4 mb-4 px-4">
                                         <label for="inputBorrowerLandline" class="w-1/4 text-gray-700 font-medium">Landline Phone</label>
                                         <div class="col-sm-10">
-                                            <input type="text" name="borrower_landline" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerLandline" placeholder="Landline Phone" value="">
+                                            <input type="text" name="borrower_landline" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerLandline" placeholder="Landline Phone" value="<?php echo $data['Landline_Phone'] ?>">
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-4 mb-4 px-4">
                                         <label for="inputBorrowerBusinessName" class="w-1/4 text-gray-700 font-medium">Business Name</label>
                                         <div class="col-sm-10">
-                                            <input type="text" name="borrower_business_name" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerBusinessName" placeholder="Business Name" value="">
+                                            <input type="text" name="borrower_business_name" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerBusinessName" placeholder="Business Name" value="<?php echo $data['Business_Name'] ?>">
                                         </div>
                                     </div>
 
@@ -449,7 +578,7 @@
                                         <label for="inputBorrowerEORS" class="w-1/4 text-gray-700 font-medium">Working Status</label>
                                         <div class="w-3/4">
                                             <select class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" name="borrower_working_status" id="inputBorrowerEORS">
-                                                <option value=""></option>
+                                                <option value="<?php echo $data['Working_Status'] ?>"><?php echo $data['Working_Status'] ?></option>
                                                 <option value="Employee">Employee</option>
                                                 <option value="Owner">Owner</option>
                                                 <option value="Student">Student</option>
@@ -463,21 +592,21 @@
 
                                         <label for="user_picture" class="w-1/4 text-gray-700 font-medium">Borrower Photo</label>
                                         <div class="col-sm-10">
-                                            <input type="file" id="photo_file" name="user_picture">
+                                            <input type="file" id="photo_file" name="user_picture" value="<?php echo $data['Borrower_Photo'] ?>">
                                         </div>
                                     </div>
 
                                     <div class="flex items-center space-x-4 mb-4 px-4">
                                         <label for="inputBorrowerDescription" class="w-1/4 text-gray-700 font-medium">Description</label>
                                         <div class="col-sm-10">
-                                            <INPUT TYPE="text" name="borrower_description" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerDescription" rows="3">
+                                            <INPUT TYPE="text" name="borrower_description" value="<?php echo $data['Description'] ?>" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" id="inputBorrowerDescription" rows="3">
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-4 mb-4 px-4">
 
                                         <label for="borrower_files" class="w-1/4 text-gray-700 font-medium">Borrower Files<br>(doc, pdf, image)</label>
                                         <div class="col-sm-10">
-                                            <input type="file" id="data_files" name="borrower_files[]" multiple>
+                                            <input type="file" id="data_files" name="borrower_files[]" value="<?php echo $data['Borrower_Files'] ?>" multiple>
                                         </div>
                                         <div class="text-slate-500 text-sm">
                                             You can select up to 30 files. Please click <b>Browse</b> button and then hold <b>Ctrl</b> button on your keyboard to select multiple files.

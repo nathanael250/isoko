@@ -17,13 +17,34 @@
         <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
             <?php include('../includes/Navbar.php') ?>
             <main class="bg-slate-200 pb-20">
-                <div class=" mx-auto max-w-screen-2xl px-4 text-slate-600">
-                    <?php
+            <div class=" mx-auto max-w-screen-2xl px-4 text-slate-600">
+                <?php
                     include('../includes/MainSubHeader.php')
                     ?>
-                    <div class='py-4'>
-                        <h1 class='text-2xl text-slate-800'>View All Loans</h1>
+            </div>
+                <div class='py-4 my-4 px-4 bg-white  border-t-[3px] border-blue-300 rounded'>
+                    <h1 class='font-bold text-slate-600 text-2xl'>No Repayments</h1>
+                    <p class="text-sm pt-4">Loans that have not received any payments since the start of the loan. You can also search for no payments made in the dates selected below.</p>
+                    <div class='py-2 px-4 bg-white  border-t-[3px] border-blue-300 rounded'>
+                        <form action="" class='mt-3'>
+                            <div class='flex gap-8 items-center'>
+                            <span>From_Date</span>
+                                <input type="date" class='w-full border border-slate-300 px-2 py-1 rounded-sm' />
+                                <span>To_Date</span>
+                                <input type="date" class='w-full border border-slate-300 px-2 py-1 rounded-sm' />
+                            </div>
+                            
+                            <div class='flex justify-between mt-6'>
+                                <button class='px-3 py-1 bg-[#188863] text-white'>Search!</button>
+                                <button class='px-3 py-1 bg-blue-950 text-white'>Reset!</button>
+                            </div>
+
+
+                        </form>
                     </div>
+                </div>
+                <div class=" mx-auto max-w-screen-2xl px-4 text-slate-600">
+                    
                     <?php
 
                     ?>
@@ -74,14 +95,14 @@
                                 $sql = "SELECT * FROM tbl_borrowers, tbl_loans 
                                                 WHERE tbl_borrowers.borrower_id = tbl_loans.borrower_id";
                                 $result = $conn->query($sql);
-                                $pptotal=0;
-                                $dtotal=0;
+                                $pptotal = 0;
+                                $dtotal = 0;
 
                                 if ($result->num_rows > 0) {
                                     while ($row = $result->fetch_assoc()) {
                                         // Calculate values within the loop
                                         $total = ($row['principal_amount'] * 10 / 100) * 12 + $row['principal_amount'];
-                                        $ptotal = $row['principal_amount']; 
+                                        $ptotal = $row['principal_amount'];
                                         $pptotal += $ptotal;
                                         $dtotal += $total;
                                         // Generate table row
