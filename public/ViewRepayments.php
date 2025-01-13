@@ -51,7 +51,7 @@
                                     <td>Action</td>
                                     <td>Collection Date</td>
                                     <td>Name</td>
-                                    <td>Loan</td>
+                                    <td>Loan#</td>
                                     <td>Collected By</td>
                                     <td>Method</td>
                                     <td>Amount</td>
@@ -59,59 +59,88 @@
                                 </tr>
                             </thead>
                             <tbody class='text-sm'>
-                                <!-- <tr class=''>
-                                    <td class='py-1'>
-                                        <button class='bg-[#096a79] px-1 py-0.5 rounded text-white text-xs'>Loans</button>
-                                    </td>
-                                    <td class='font-semibold  text-black py-1'>Mr. NIYOGUSHIMWA Natanael</td>
-                                    <td class='py-1'>BYTECANVAS</td>
-                                    <td class='py-1'>1000001</td>
-                                    <td class='py-1'>0781796824</td>
-                                    <td class='text-blue-600 py-1'>nathanaelniyogushimwa@gmail.com</td>
-                                    <td class='py-1 text-right'>0</td>
-                                    <td class='py-1 text-right'>0</td>
-                                    <td class='py-1'></td>
-                                    <td class='py-1 space-x-1'>
-                                        <span><button class=' border border-slate-300 px-1 rounded'>
-                                                <FontAwesomeIcon icon={faPencil} class='fa-xs' />
-                                            </button></span>
-                                        <span><button class='border border-slate-300 px-1 rounded'>
-                                                <FontAwesomeIcon icon={faXmark} class='fa-xs' />
-                                            </button></span>
-                                    </td>
+                                <?php
+                                // Database connection
+                                $conn = new mysqli('localhost', 'root', '', 'lms1');
 
-                                </tr> -->
-                                <tr>
-                                <td colSpan='6' class="text-black text-center">No data found. To add a repayment, visit <b>Loan</b>(left menu) --- <a href="#" class=" font-semibold text-blue-600">View All Loans</a> --- <b>View</b> --- <b>Add Repayment</b></td>
-                                </tr>
-                                <tr class='bg-slate-300 text-sm'>
-                                    <td colspan="6"></td>
-                                    <td class='text-black font-bold text-right'>0,00</td>
-                                    
-                                    <td></td>
-                                </tr>
+                                // Check connection
+                                if ($conn->connect_error) {
+                                    die("Connection failed: " . $conn->connect_error);
+                                }
+
+                                // Fetch borrowers data
+                                $sql = "SELECT * FROM tbl_borrowers, tbl_loans, tbl_bulk_repayments 
+                                                WHERE tbl_borrowers.borrower_id = tbl_loans.borrower_id AND tbl_loans.loan_id = tbl_bulk_repayments.loan_id";
+                                $result = $conn->query($sql);
+                                $pptotal = 0;
+                                $dtotal = 0;
+
+                                if ($result->num_rows > 0) {
+                                    while ($row = $result->fetch_assoc()) {
+                                        // Calculate values within the loop
+                                        $total = ($row['principal_amount'] * 10 / 100) * 12 + $row['principal_amount'];
+                                        $ptotal = $row['principal_amount'];
+                                        $pptotal += $ptotal;
+                                        $dtotal += $total;
+                                        $d = ($row['principal_amount'] * 2.2);
+                                        // Generate table row
+                                        echo "<tr>
+                        <td class='py-1 space-x-1'>
+                        <span>
+                            <a href='ViewLoansDetail.php?loan_id={$row['loan_id']} '>
+                            <button class='border border-slate-300 px-1 rounded'>
+                        <i class='fas fa-pencil-alt fa-xs'></i>
+                            </button>
+                            </a>
+                        </span>
+                    </td>
+                    <td class='font-semibold py-1'>{$row['collected_date']}</td>
+                    <td class='font-semibold py-1'>{$row['Title']}  {$row['First_Name']}   {$row['Last_Name']}</td>
+                    <td class='py-1'>{$row['loan_id']}</td>
+                    <td class='py-1'>{$row['collected_by']}</td>
+                    <td class='py-1'>{$row['method']} </td>
+                    <td class='py-1'>" . number_format($row['amount'], 2, '.', ',') . "</td>
+                    <td class='py-1'>
+                    <a href='view_repayment_receipt.php?repayment_id={$row['repayment_id']}' target='_blank'><i class='fa fa-file-pdf-o p-1'></i></a>
+                    <i class='fa fa-envelope' aria-hidden='true'></i>
+                    </td>
+                </tr>";
+                                    }
+
+                                    // Generate the summary row using stored values
+                                    echo "<tr class='bg-slate-300 text-sm'>
+            <td colSpan='6'></td>
+            <td class='text-black font-bold'>" . number_format($dtotal, 2, '.', ',') . "</td>
+            <td colSpan='2'></td>
+        </tr>";
+                                } else {
+                                    echo "<tr><td colspan='10' class='text-center py-2'>No borrowers found</td></tr>";
+                                }
+
+                                $conn->close();
+                                ?>
                             </tbody>
 
                         </table>
                         <div class='pt-3 text-sm text-slate-800'>
-                            <span>Showing 1 to 1 of 1 entries</span>
+                            <span>Showing <?php echo $result->num_rows; ?> entries</span>
                         </div>
                         <script>
-                        function toggleMenu(menuId) {
-                            const menu = document.getElementById(menuId);
-                            const arrow = document.querySelector(`#${menuId} ~ button i`);
+                            function toggleMenu(menuId) {
+                                const menu = document.getElementById(menuId);
+                                const arrow = document.querySelector(`#${menuId} ~ button i`);
 
-                            if (menu.classList.contains('hidden')) {
-                                menu.classList.remove('hidden');
-                                menu.classList.add('block');
-                                arrow.classList.add('rotate-90');
-                            } else {
-                                menu.classList.add('hidden');
-                                menu.classList.remove('block');
-                                arrow.classList.remove('rotate-90');
+                                if (menu.classList.contains('hidden')) {
+                                    menu.classList.remove('hidden');
+                                    menu.classList.add('block');
+                                    arrow.classList.add('rotate-90');
+                                } else {
+                                    menu.classList.add('hidden');
+                                    menu.classList.remove('block');
+                                    arrow.classList.remove('rotate-90');
+                                }
                             }
-                        }
-                    </script>
+                        </script>
                     </div>
 
             </main>

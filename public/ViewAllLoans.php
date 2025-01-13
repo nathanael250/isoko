@@ -46,7 +46,7 @@
                         </div>
                         <table class='w-full mt-2'>
                             <thead class='bg-blue-200  text-sm font-bold'>
-                                <tr class='text-slate-900'>
+                                <tr class='text-slate-900 divide-x-2 divide-white'>
                                     <td>View</td>
                                     <td>Release</td>
                                     <td>Name</td>
@@ -60,7 +60,7 @@
                                     <td>Status</td>
                                 </tr>
                             </thead>
-                            <tbody class='text-sm'>
+                            <tbody class='text-sm divide-y-2 divide-white'>
                                 <?php
                                 // Database connection
                                 $conn = new mysqli('localhost', 'root', '', 'lms1');
@@ -70,67 +70,86 @@
                                     die("Connection failed: " . $conn->connect_error);
                                 }
 
-                                // Fetch borrowers data
-                                $sql = "SELECT * FROM tbl_borrowers, tbl_loans 
-                                                WHERE tbl_borrowers.borrower_id = tbl_loans.borrower_id";
+                                // Fetch loans and repayments data
+                                $sql = "
+        SELECT 
+            tbl_loans.loan_id, tbl_loans.borrower_id, tbl_loans.loan_number, tbl_loans.principal_amount, 
+            tbl_loans.interest, tbl_loans.interest_duration, tbl_loans.release_date, 
+            tbl_borrowers.Title, tbl_borrowers.First_Name, tbl_borrowers.Last_Name,
+            IFNULL(SUM(tbl_bulk_repayments.amount), 0) AS total_paid,
+            MAX(tbl_bulk_repayments.collected_date) AS last_payment_date
+        FROM tbl_loans
+        LEFT JOIN tbl_borrowers ON tbl_loans.borrower_id = tbl_borrowers.borrower_id
+        LEFT JOIN tbl_bulk_repayments ON tbl_loans.loan_id = tbl_bulk_repayments.loan_id
+        GROUP BY tbl_loans.loan_id
+    ";
+
                                 $result = $conn->query($sql);
-                                $pptotal=0;
-                                $dtotal=0;
+                                $pptotal = 0;
+                                $dtotal = 0;
+                                $ddtotal = 0;
+                                $paid = 0;
 
                                 if ($result->num_rows > 0) {
                                     while ($row = $result->fetch_assoc()) {
-                                        // Calculate values within the loop
-                                        $total = ($row['principal_amount'] * 10 / 100) * 12 + $row['principal_amount'];
-                                        $ptotal = $row['principal_amount']; 
-                                        $pptotal += $ptotal;
-                                        $dtotal += $total;
+                                        // Calculate balance and totals
+                                        $due_amount = ($row['principal_amount'] * 2.2);  // Example balance calculation
+                                        $remaining_balance = $due_amount - $row['total_paid'];
+
+                                        $pptotal += $row['principal_amount'];
+                                        $ddtotal += $due_amount;
+                                        $dtotal += $remaining_balance;
+                                        $paid += $row['total_paid'];
+
                                         // Generate table row
                                         echo "<tr>
-                        <td class='py-1 space-x-1'>
-                        <span>
-                            <a href='ViewLoansDetail.php?loan_id={$row['loan_id']} '>
+                <td class='py-1 space-x-1'>
+                    <span>
+                        <a href='ViewLoansDetail.php?loan_id={$row['loan_id']}'>
                             <button class='border border-slate-300 px-1 rounded'>
-                        <i class='fas fa-pencil-alt fa-xs'></i>
+                                <i class='fas fa-pencil-alt fa-xs'></i>
                             </button>
-                            </a>
-                            <a href='#?loan_id={$row['loan_id']} '>
+                        </a>
+                        <a href='#?loan_id={$row['loan_id']}'>
                             <button class='border border-slate-300 px-1 rounded'>
                                 <i class='fas fa-message fa-xs'></i>
                             </button>
-                            </a>
-                        </span>
-                    </td>
-                    <td class='font-semibold py-1'>{$row['release_date']}</td>
-                    <td class='text-black font-semibold py-1'>{$row['Title']}  {$row['First_Name']}   {$row['Last_Name']}</td>
-                    <td class='py-1'>{$row['loan_number']}</td>
-                    <td class='py-1'>" . number_format($row['principal_amount'], 2, '.', ',') . "</td>
-                    <td class='py-1'>{$row['interest']} % / {$row['interest_duration']}</td>
-                    <td class='py-1'>" . number_format($total, 2, '.', ',') . "</td>
-                    <td class='py-1 '>0</td>
-                    <td class='py-1'>" . number_format($total, 2, '.', ',') . "</td>
-                    <td class='py-1 '>0</td>
-                    <td class='py-1'> <button class='bg-[#096a79] px-1 py-0.5 rounded text-white text-xs'>Current</button></td>
-                </tr>";
+                        </a>
+                    </span>
+                </td>
+                <td class='font-semibold py-1'>{$row['release_date']}</td>
+                <td class='text-black font-semibold py-1 text-sm'>{$row['Title']} {$row['First_Name']} {$row['Last_Name']}</td>
+                <td class='py-1'>{$row['loan_number']}</td>
+                <td class='py-1'>" . number_format($row['principal_amount'], 2, '.', ',') . "</td>
+                <td class='py-1'>{$row['interest']} % / {$row['interest_duration']}</td>
+                <td class='py-1 text-sm'>" . number_format($due_amount, 2, '.', ',') . "</td>
+                <td class='py-1'>" . number_format($row['total_paid'], 2, '.', ',') . "</td>
+                <td class='py-1'>" . number_format($remaining_balance, 2, '.', ',') . "</td>
+                <td class='py-1 flex-col'>" . ($row['last_payment_date'] ? "{$row['last_payment_date']} [" . number_format($row['total_paid'], 2, '.', ',') . "]" : "No Payment") . "</td>
+                <td class='py-1'>
+                    <button class='bg-[#096a79] px-1 py-0.5 rounded text-white text-xs'>Current</button>
+                </td>
+            </tr>";
                                     }
 
-                                    // Generate the summary row using stored values
+                                    // Generate summary row
                                     echo "<tr class='bg-slate-300 text-sm'>
             <td colSpan='4'></td>
             <td class='text-black font-bold py-1'>" . number_format($pptotal, 2, '.', ',') . "</td>
-            <td colSpan=''></td>
+            <td></td>
+            <td class='text-black font-bold'>" . number_format($ddtotal, 2, '.', ',') . "</td>
+            <td class='text-black font-bold'>" . number_format($paid, 2, '.', ',') . "</td>
             <td class='text-black font-bold'>" . number_format($dtotal, 2, '.', ',') . "</td>
-            <td class='text-black font-bold'>0.00</td>
-            <td class='text-black font-bold'>" . number_format($dtotal, 2, '.', ',') . "</td>
-            <td class='text-black font-bold'>0.00</td>
-            <td colSpan='2'></td>
+            <td colSpan='3'></td>
         </tr>";
                                 } else {
-                                    echo "<tr><td colspan='10' class='text-center py-2'>No borrowers found</td></tr>";
+                                    echo "<tr><td colspan='10' class='text-center py-2'>No loans found</td></tr>";
                                 }
 
                                 $conn->close();
                                 ?>
                             </tbody>
+
 
 
                         </table>

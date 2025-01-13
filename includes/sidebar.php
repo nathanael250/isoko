@@ -176,7 +176,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="#" class="block hover:text-white rounded-md truncate overflow-hidden">
+                                <a href="repaymentChart.php" class="block hover:text-white rounded-md truncate overflow-hidden">
                                     Repayments Charts
                                 </a>
                             </li>
