@@ -81,16 +81,30 @@
                                 </div>
                                 <!-- Content Section -->
                                 <div class="p-2 relative z-10">
+                                    <?php
+                                    // Database connection
+                                    $conn = new mysqli('localhost', 'root', '', 'lms1');
+
+                                    // Check connection
+                                    if ($conn->connect_error) {
+                                        die("Connection failed: " . $conn->connect_error);
+                                    }
+
+
+                                    $sel = "SELECT count(*) AS total_borrowers FROM tbl_borrowers";
+                                    $result = mysqli_query($conn, $sel);
+                                    $data = mysqli_fetch_assoc($result);
+                                    ?>
                                     <div class="text-gray-600 font-bold text-lg gap-2 flex items-center">
-                                        <i class="fa-solid fa-plus fa-sm text-primary cursor-pointer"></i>
-                                        <span>0 - Total</span>
+                                        <i class="fa-solid fa-plus-circle fa-lg text-primary cursor-pointer"></i>
+                                        <span><?php echo $data['total_borrowers']; ?> - Total</span>
                                     </div>
                                     <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
-                                        <i class="fa-solid fa-plus fa-sm text-primary cursor-pointer"></i>
-                                        <span>0 - Active</span>
+                                        <i class="fa-solid fa-plus-circle fa-lg text-primary cursor-pointer"></i>
+                                        <span><?php echo $data['total_borrowers']; ?> - Active</span>
                                     </div>
                                     <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
-                                        <i class="fa-solid fa-plus fa-sm text-primary cursor-pointer"></i>
+                                        <i class="fa-solid fa-plus-circle fa-lg text-primary cursor-pointer"></i>
                                         <span>0 - Fully Paid</span>
                                     </div>
                                 </div>
@@ -107,20 +121,35 @@
                                 </div>
                                 <!-- Content Section -->
                                 <div class="p-2 relative z-10">
+                                    <?php
+                                    // Database connection
+                                    $conn = new mysqli('localhost', 'root', '', 'lms1');
+
+                                    // Check connection
+                                    if ($conn->connect_error) {
+                                        die("Connection failed: " . $conn->connect_error);
+                                    }
+
+
+                                    $sel1 = "SELECT principal_amount, count(loan_id) AS total_loans FROM tbl_loans";
+                                    $result1 = mysqli_query($conn, $sel1);
+                                    $data1 = mysqli_fetch_assoc($result1);
+                                    ?>
                                     <div class="text-gray-600 font-bold text-lg gap-2 flex items-center">
-                                        <span>0 - Total</span>
+                                        <span><?php echo number_format($data1['principal_amount'] * $data1['total_loans'], 2, '.', ',') ?> - Total</span>
                                     </div>
                                     <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
-                                        <span>0 - Active</span>
+                                        <span><?php echo number_format($data1['principal_amount'], 2, '.', ',') ?> - This Year</span>
                                     </div>
                                     <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
-                                        <span>0 - Fully Paid</span>
+                                        <span><?php echo number_format($data1['principal_amount'], 2, '.', ',') ?> - This Month</span>
                                     </div>
                                 </div>
                                 <!-- Footer Section -->
                                 <div class="bg-primary text-white text-center py-1 mt-2 rounded-b-lg">
-                                    Principal Released
-                                    <i class="fa-solid fa-up-down-left-right"></i>
+                                    <a href="ViewAllBrowsers.php" target="_blank">Principal Released
+                                        <i class="fa-solid fa-up-down-left-right"></i>
+                                    </a>
                                 </div>
                             </div>
                             <!-- card 3 -->
@@ -131,20 +160,46 @@
                                 </div>
                                 <!-- Content Section -->
                                 <div class="p-2 relative z-10">
-                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center">
-                                        <span>0 - Total</span>
-                                    </div>
-                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
-                                        <span>0 - Active</span>
-                                    </div>
-                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
-                                        <span>0 - Fully Paid</span>
-                                    </div>
+                                    <?php
+                                    // Database connection
+                                    $conn = new mysqli('localhost', 'root', '', 'lms1');
+
+                                    // Check connection
+                                    if ($conn->connect_error) {
+                                        die("Connection failed: " . $conn->connect_error);
+                                    }
+
+                                    // Fetch borrowers data
+                                    $sql = "SELECT * FROM tbl_borrowers, tbl_loans, tbl_bulk_repayments 
+                                                WHERE tbl_borrowers.borrower_id = tbl_loans.borrower_id AND tbl_loans.loan_id = tbl_bulk_repayments.loan_id";
+                                    $result = $conn->query($sql);
+                                    $ptotal = 0;
+                                    $dtotal = 0;
+
+                                    if ($result->num_rows > 0) {
+                                        while ($row = $result->fetch_assoc()) {
+                                            // Calculate values within the loop
+                                            $total = ($row['principal_amount'] * 10 / 100) * 12 + $row['principal_amount'];
+                                            $ptotal += $row['amount'];
+                                            $d = ($row['principal_amount'] * 2.2);
+                                        }
+                                    ?>
+                                        <div class="text-gray-600 font-bold text-lg gap-2 flex items-center">
+                                            <span><?php echo number_format($ptotal, 2, '.', ',')  ?> - Total</span>
+                                        </div>
+                                        <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
+                                            <span><?php echo  number_format($ptotal, 2, '.', ',') ?> - This Month</span>
+                                        </div>
+                                        <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
+                                            <span><?php echo number_format($ptotal, 2, '.', ',') ?> - This Year</span>
+                                        </div>
+                                    <?php } ?>
                                 </div>
                                 <!-- Footer Section -->
                                 <div class="bg-primary text-white text-center py-1 mt-2 rounded-b-lg">
-                                    Collections incl. Deductable Fees
-                                    <i class="fa-solid fa-up-down-left-right"></i>
+                                    <a href="ViewRepayments.php" target="_blank"> Collections incl. Deductable Fees
+                                        <i class="fa-solid fa-up-down-left-right"></i>
+                                    </a>
                                 </div>
                             </div>
                             <!-- card 4 -->
@@ -155,14 +210,28 @@
                                 </div>
                                 <!-- Content Section -->
                                 <div class="p-2 relative z-10">
+                                    <?php
+                                    // Database connection
+                                    $conn = new mysqli('localhost', 'root', '', 'lms1');
+
+                                    // Check connection
+                                    if ($conn->connect_error) {
+                                        die("Connection failed: " . $conn->connect_error);
+                                    }
+
+
+                                    $sel = "SELECT count(*) AS total_borrowers FROM tbl_borrowers";
+                                    $result = mysqli_query($conn, $sel);
+                                    $data = mysqli_fetch_assoc($result);
+                                    ?>
                                     <div class="text-gray-600 font-bold text-lg gap-2 flex items-center">
-                                        <span>0 - Total</span>
+                                        <span><?php echo $data['total_borrowers']; ?> - This Year</span>
                                     </div>
                                     <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
-                                        <span>0 - Active</span>
+                                        <span><?php echo $data['total_borrowers']; ?> - Last 3 Months</span>
                                     </div>
                                     <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
-                                        <span>0 - Fully Paid</span>
+                                        <span><?php echo $data['total_borrowers']; ?> - This Month</span>
                                     </div>
                                 </div>
                                 <!-- Footer Section -->
@@ -183,7 +252,99 @@
                                     <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
                                     <div class="text-gray-500  text-sm flex gap-1 items-center">
                                         OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
+                                    </div>
+                                    <?php
+                                    // Database connection
+                                    $conn = new mysqli('localhost', 'root', '', 'lms1');
+
+                                    // Check connection
+                                    if ($conn->connect_error) {
+                                        die("Connection failed: " . $conn->connect_error);
+                                    }
+
+                                    // Fetch loans and repayments data
+                                    $sql = "
+                                        SELECT 
+                                            tbl_loans.loan_id, tbl_loans.borrower_id, tbl_loans.loan_number, tbl_loans.principal_amount, 
+                                            tbl_loans.interest, tbl_loans.interest_duration, tbl_loans.release_date, 
+                                            tbl_borrowers.Title, tbl_borrowers.First_Name, tbl_borrowers.Last_Name,
+                                            IFNULL(SUM(tbl_bulk_repayments.amount), 0) AS total_paid,
+                                            MAX(tbl_bulk_repayments.collected_date) AS last_payment_date
+                                        FROM tbl_loans
+                                        LEFT JOIN tbl_borrowers ON tbl_loans.borrower_id = tbl_borrowers.borrower_id
+                                        LEFT JOIN tbl_bulk_repayments ON tbl_loans.loan_id = tbl_bulk_repayments.loan_id
+                                        GROUP BY tbl_loans.loan_id
+                                    ";
+
+                                    $result = $conn->query($sql);
+                                    $pptotal = 0;
+                                    $dtotal = 0;
+                                    $ddtotal = 0;
+                                    $paid = 0;
+                                    $total_interest = 0;
+
+                                    if ($result->num_rows > 0) {
+                                        while ($row = $result->fetch_assoc()) {
+                                            // Calculate balance and totals
+                                            $due_amount = ($row['principal_amount'] * 2.2);  // Example balance calculation
+                                            $remaining_balance = $due_amount - $row['total_paid'];
+                                            $pptotal += $row['principal_amount'];
+                                            $ddtotal += $due_amount;
+                                            $dtotal += $remaining_balance;
+                                            $paid += $row['total_paid'];
+                                            $interest = ($row['principal_amount'] * 10 / 100) * 12;
+                                            $total_interest += $interest;
+                                        }
+                                    }
+                                    ?>
+                                    <div class="text-black font-semibold text-lg mt-1"><?php echo number_format($ddtotal, 2, '.', ',') ?></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
+                                <!-- Icon Section -->
+                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
+                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
+                                </div>
+
+                                <!-- Content Section -->
+                                <div class="px-4 py-2 flex-1">
+                                    <div class="text-gray-500 text-sm">PRINCIPAL OUTSTANDING</div>
+                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
+                                        OPEN LOANS <i
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
+                                    </div>
+                                    <div class="text-black font-semibold text-lg mt-1"><?php echo number_format($pptotal, 2, '.', ',') ?></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
+                                <!-- Icon Section -->
+                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
+                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
+                                </div>
+
+                                <!-- Content Section -->
+                                <div class="px-4 py-2 flex-1">
+                                    <div class="text-gray-500 text-sm">INTEREST OUTSTANDING</div>
+                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
+                                        OPEN LOANS <i
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
+                                    </div>
+                                    <div class="text-black font-semibold text-lg mt-1"><?php echo number_format($total_interest, 2, '.', ',') ?></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
+                                <!-- Icon Section -->
+                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
+                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
+                                </div>
+
+                                <!-- Content Section -->
+                                <div class="px-4 py-2 flex-1">
+                                    <div class="text-gray-500 text-sm">FEES OUTSTANDING</div>
+                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
+                                        OPEN LOANS <i
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
                                     </div>
                                     <div class="text-black font-semibold text-lg mt-1">0</div>
                                 </div>
@@ -196,172 +357,156 @@
 
                                 <!-- Content Section -->
                                 <div class="px-4 py-2 flex-1">
-                                    <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
+                                    <div class="text-gray-500 text-sm">PENALITY OUTSTANDING</div>
                                     <div class="text-gray-500  text-sm flex gap-1 items-center">
                                         OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
                                     </div>
                                     <div class="text-black font-semibold text-lg mt-1">0</div>
                                 </div>
                             </div>
                             <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
                                 <!-- Icon Section -->
-                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
-                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
+                                <div class="bg-green-500 flex justify-center items-center w-20 h-full">
+                                    <h1 class="text-white text-[50px] font-bold">P</h1>
                                 </div>
 
                                 <!-- Content Section -->
                                 <div class="px-4 py-2 flex-1">
-                                    <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
-                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
-                                        OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
+                                    <div class="text-gray-500 text-sm">PROCESSING LOANS
+                                        <i
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
                                     </div>
+
                                     <div class="text-black font-semibold text-lg mt-1">0</div>
                                 </div>
                             </div>
                             <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
                                 <!-- Icon Section -->
-                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
-                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
+                                <div class="bg-green-500 flex justify-center items-center w-20 h-full">
+                                    <h1 class="text-white text-[50px] font-bold">O</h1>
                                 </div>
 
                                 <!-- Content Section -->
                                 <div class="px-4 py-2 flex-1">
-                                    <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
-                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
-                                        OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
+                                    <div class="text-gray-500 text-sm">OPEN LOANS
+                                        <i
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
                                     </div>
-                                    <div class="text-black font-semibold text-lg mt-1">0</div>
+
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center">
+                                        <span><?php //echo $data['total_borrowers']; ?> 0- Total</span>
+                                    </div>
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
+                                        <span><?php //echo $data['total_borrowers']; ?> 0- Released This Month</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
                                 <!-- Icon Section -->
-                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
-                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
+                                <div class="bg-green-500 flex justify-center items-center w-20 h-full">
+                                    <h1 class="text-white text-[50px] font-bold">F</h1>
                                 </div>
 
                                 <!-- Content Section -->
                                 <div class="px-4 py-2 flex-1">
-                                    <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
-                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
-                                        OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
+                                    <div class="text-gray-500 text-sm">FULL PAID LOANS
+                                        <i
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
                                     </div>
-                                    <div class="text-black font-semibold text-lg mt-1">0</div>
+
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center">
+                                        <span><?php //echo $data['total_borrowers']; ?> 0- This Year</span>
+                                    </div>
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
+                                        <span><?php //echo $data['total_borrowers']; ?> 0- This Month</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
                                 <!-- Icon Section -->
-                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
-                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
+                                <div class="bg-green-500 flex justify-center items-center w-20 h-full">
+                                    <h1 class="text-white text-[50px] font-bold">R</h1>
                                 </div>
 
                                 <!-- Content Section -->
                                 <div class="px-4 py-2 flex-1">
-                                    <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
-                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
-                                        OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
+                                    <div class="text-gray-500 text-sm">RESTRUCTURED LOANS
+                                        <i
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
                                     </div>
-                                    <div class="text-black font-semibold text-lg mt-1">0</div>
+
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center">
+                                        <span><?php //echo $data['total_borrowers']; ?> 0-Released This Year</span>
+                                    </div>
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
+                                        <span><?php //echo $data['total_borrowers']; ?> 0-Released This Month</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
                                 <!-- Icon Section -->
-                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
-                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
+                                <div class="bg-green-500 flex justify-center items-center w-20 h-full">
+                                    <h1 class="text-white text-[50px] font-bold">Df</h1>
                                 </div>
 
                                 <!-- Content Section -->
                                 <div class="px-4 py-2 flex-1">
-                                    <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
-                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
-                                        OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
+                                    <div class="text-gray-500 text-sm">DEFAULT LOANS
+                                        <i
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
                                     </div>
-                                    <div class="text-black font-semibold text-lg mt-1">0</div>
+
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center">
+                                        <span><?php //echo $data['total_borrowers']; ?> 0- This Year</span>
+                                    </div>
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
+                                        <span><?php //echo $data['total_borrowers']; ?> 0- This Month</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
                                 <!-- Icon Section -->
-                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
-                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
+                                <div class="bg-green-500 flex justify-center items-center w-20 h-full">
+                                    <h1 class="text-white text-[50px] font-bold">Dn</h1>
                                 </div>
 
                                 <!-- Content Section -->
                                 <div class="px-4 py-2 flex-1">
-                                    <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
-                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
-                                        OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
+                                    <div class="text-gray-500 text-sm">DINIED LOANS
+
+                                        <i
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
+
                                     </div>
-                                    <div class="text-black font-semibold text-lg mt-1">0</div>
+
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center">
+                                        <span><?php //echo $data['total_borrowers']; ?> 0- This Year</span>
+                                    </div>
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
+                                        <span><?php //echo $data['total_borrowers']; ?> 0- This Month</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
                                 <!-- Icon Section -->
-                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
-                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
+                                <div class="bg-green-500 flex justify-center items-center w-20 h-full">
+                                    <h1 class="text-white text-[50px] font-bold">N</h1>
                                 </div>
 
                                 <!-- Content Section -->
                                 <div class="px-4 py-2 flex-1">
-                                    <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
-                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
-                                        OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
+                                    <div class="text-gray-500 text-sm">NOT TAKEN UP LOANS
+                                        <i
+                                            class="fa-solid fa-plus-circle fa-md text-primary cursor-pointer stroke-2"></i>
                                     </div>
-                                    <div class="text-black font-semibold text-lg mt-1">0</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
-                                <!-- Icon Section -->
-                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
-                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
-                                </div>
 
-                                <!-- Content Section -->
-                                <div class="px-4 py-2 flex-1">
-                                    <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
-                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
-                                        OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center">
+                                        <span><?php //echo $data['total_borrowers']; ?> 0- This Year</span>
                                     </div>
-                                    <div class="text-black font-semibold text-lg mt-1">0</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
-                                <!-- Icon Section -->
-                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
-                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
-                                </div>
-
-                                <!-- Content Section -->
-                                <div class="px-4 py-2 flex-1">
-                                    <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
-                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
-                                        OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
+                                    <div class="text-gray-600 font-bold text-lg gap-2 flex items-center mt-2">
+                                        <span><?php // echo $data['total_borrowers']; ?> 0- This Month</span>
                                     </div>
-                                    <div class="text-black font-semibold text-lg mt-1">0</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center w-80 border rounded-lg shadow-md bg-white overflow-hidden">
-                                <!-- Icon Section -->
-                                <div class="bg-blue-500 flex justify-center items-center w-20 h-full">
-                                    <i class="fa-solid fa-scale-balanced text-white fa-3x"></i>
-                                </div>
-
-                                <!-- Content Section -->
-                                <div class="px-4 py-2 flex-1">
-                                    <div class="text-gray-500 text-sm">TOTAL OUTSTANDING</div>
-                                    <div class="text-gray-500  text-sm flex gap-1 items-center">
-                                        OPEN LOANS <i
-                                            class="fa-solid fa-plus fa-sm text-primary cursor-pointer stroke-2"></i>
-                                    </div>
-                                    <div class="text-black font-semibold text-lg mt-1">0</div>
                                 </div>
                             </div>
 
@@ -420,7 +565,7 @@
                                 plugins: {
                                     tooltip: {
                                         callbacks: {
-                                            label: function (context) {
+                                            label: function(context) {
                                                 return `Loans Released: ${context.raw}`;
                                             }
                                         }

@@ -79,9 +79,7 @@
                                     while ($row = $result->fetch_assoc()) {
                                         // Calculate values within the loop
                                         $total = ($row['principal_amount'] * 10 / 100) * 12 + $row['principal_amount'];
-                                        $ptotal = $row['principal_amount'];
-                                        $pptotal += $ptotal;
-                                        $dtotal += $total;
+                                        $ptotal += $row['amount'];
                                         $d = ($row['principal_amount'] * 2.2);
                                         // Generate table row
                                         echo "<tr>
@@ -110,7 +108,7 @@
                                     // Generate the summary row using stored values
                                     echo "<tr class='bg-slate-300 text-sm'>
             <td colSpan='6'></td>
-            <td class='text-black font-bold'>" . number_format($dtotal, 2, '.', ',') . "</td>
+            <td class='text-black font-bold'>" . number_format($ptotal, 2, '.', ',') . "</td>
             <td colSpan='2'></td>
         </tr>";
                                 } else {
